@@ -1,0 +1,1642 @@
+
+                                         Java 9 features
+
+Java Modules:
+
+Before Java 9,Java apps built using package model.
+
+App contains = 100 classes and depedencies(200)
+
+When you pack, you pack 100 classes + 200 dependencies and also you pack jdk libs apis which makes you bundle size larger.
+
+Old java apps carries lot of unncessary code and depdencies which is problem for cloud and container worlds.
+
+In old java applications, you cant avoid ClassNotFoundException, during runtime if you refere any class which is not part of the app.
+
+
+Solution : Java Modules
+
+What is java module?
+  A Java Module is packaging mechanism that enables you to package a java app or java apis as a separate module.
+
+  A java module is packed as modular jar file.
+
+  A module can define what packages it contains
+
+  A module can define the dependencies it contains
+  eg : product module has dependency with inventory module.
+ 
+  In order to standarize the java team has introduced "JPMS" - Java Platform Module System
+
+Note:
+  every java feature is relased as a spec or part of spec.
+
+JSR 277: JavaTM Module System
+
+JSR 277 later was put on hold and "Project Jigsaw" was created to modularize the JDK. 
+
+JPMS Advantages:
+...............
+1.Smaller apps distributable via modular system, which makes real micro service development
+
+2.Encapsulation of internal packages , the module need not expose any module if you dont want.
+
+3.Startup dection of missing modules, Unlike classNotFoundException is discovered during runtime but modules missing are decected during loading itself.
+
+How to define module?
+
+ A Module contain one or more packages
+
+ A Module = {packages}
+
+Module Naming:
+  Modules are like package names -  com.ibs.airlines
+  Modules are defined using directory module - com/ibs/airlines/com.ibs.booking
+ 
+Module descriptor(module-info.java)
+
+module com.ibs.airlines {
+   exports com.ibs.booking ; //you are telling this package is available outside this app
+}
+
+Depedencies:
+ module com.ibs.airlines {
+   requires com.ibs.users
+}
+
+how to compile java code with module enabled?
+
+javac -d build --module-source-path  src/main/java --module com.ibs.airlines
+
+How to run module code?
+
+java --module-path --build com.ibs.airline/com.ibs.book.Main
+
+Java Projects:
+
+-plain Java Project
+-Java Maven Project
+
+
+Steps:
+
+1.create java project
+
+2.right click on project, create module
+
+3.create packages and classes
+  package com.mycom.greeter;
+
+public class Greeter {
+    public String sayHello(){
+        return "Hello";
+    }
+}
+4.create module-info.java
+module greeter {
+    //exports this package so that we can use outside
+    exports com.mycom.greeter;
+}
+
+4.create main module and class
+package com.ibs;
+
+import com.airbnb.services.AirlineService;
+import com.mycom.greeter.Greeter;
+
+public class App {
+    public static void main(String[] args) {
+        Greeter greeter = new Greeter();
+        System.out.println(greeter.sayHello());
+           
+    }
+}
+
+5.module.info
+module app {
+    requires  greeter;
+    requires airlines;
+}
+
+How to create maven project? please follow the examples
+..............................................................................................
+
+
+Interface with Private Methods:
+
+package com.ibs.javafeatures.interfaces;
+
+public interface Greeter {
+    //public
+    default void sayHello(){
+         sayGreet();
+    }
+    private void sayGreet(){
+        System.out.println("Greet me Private");
+    }
+}
+package com.ibs.javafeatures.interfaces;
+
+public class Main {
+    public static void main(String[] args) {
+        Greeter greeter = new Greeter() {
+        };
+        greeter.sayHello();
+       // greeter.sayGreet()
+    }
+}
+...........................................................................................
+try....with resource improvements;
+
+The try-with-resources statement is a try statement with one or more resources duly declared. Here resource is an object which should be closed once it is no more required. The try-with-resources statement ensures that each resource is closed after the requirement finishes. Any object implementing java.lang.AutoCloseable or java.io.Closeable, interface can be used as a resource.
+
+Prior to Java 9, resources are to be declared before try or inside try statement as shown below in given example. In this example, we'll use BufferedReader as resource to read a string and then BufferedReader is to be closed.
+
+
+
+Before java 9 code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+
+public class Tester {
+   public static void main(String[] args) throws IOException {
+      System.out.println(readData("test"));
+   } 
+   static String readData(String message) throws IOException {
+      Reader inputString = new StringReader(message);
+      BufferedReader br = new BufferedReader(inputString);
+      try (BufferedReader br1 = br) {
+         return br1.readLine();
+      }
+   }
+}
+
+After java 9 code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+
+public class Tester {
+   public static void main(String[] args) throws IOException {
+      System.out.println(readData("test"));
+   } 
+   static String readData(String message) throws IOException {
+      Reader inputString = new StringReader(message);
+      BufferedReader br = new BufferedReader(inputString);
+      try (br) {
+         return br.readLine();
+      }
+   }
+}
+.............................................................................................
+Java 9 Anonymous Inner Classes Improvement
+
+Java 9 introduced a new feature that allows us to use diamond operator with anonymous classes. Using the diamond with anonymous classes was not allowed in before Java .
+
+In Java 9, as long as the inferred type is denotable, we can use the diamond operator when we create an anonymous inner class.
+
+Data types that can be written in Java program like int, String etc are called denotable types. Java 9 compiler is enough smart and now can infer type.
+
+
+java 8 code and error:
+
+abstract class ABCD<T>{  
+    abstract T show(T a, T b);  
+}  
+public class TypeInferExample {  
+    public static void main(String[] args) {  
+        ABCD<String> a = new ABCD<>() { // diamond operator is empty  
+            String show(String a, String b) {  
+                return a+b;   
+            }  
+        };    
+        String result = a.show("Java","9");  
+        System.out.println(result);  
+    }  
+}  
+
+TypeInferExample.java:7: error: cannot infer type arguments for ABCD<T>
+		ABCD<String> a = new ABCD<>() {
+		                         ^
+  reason: cannot use '<>' with anonymous inner classes
+  where T is a type-variable:
+    T extends Object declared in class ABCD
+1 error
+
+No error from java 9
+
+package com.ibs.demos.anonmousdiamond;
+
+abstract class ABCD<T>{
+    abstract T show(T a, T b);
+}
+public class TypeInfer {
+    public static void main(String[] args) {
+        ABCD<String> a = new ABCD<>() { // diamond operator is empty, compiler infer type
+            String show(String a, String b) {
+                return a+b;
+            }
+        };
+        String result = a.show("Java","9");
+        System.out.println(result);
+    }
+}
+..............................................................................................
+Java 9 @SafeVarargs Annotation
+
+...
+
+It is an annotation which applies on a method or constructor that takes varargs parameters. It is used to ensure that the method does not perform unsafe operations on its varargs parameters.
+
+It was included in Java7 and can only be applied on
+
+Final methods
+Static methods
+Constructors
+
+From Java 9, it can also be used with private instance methods.
+
+Note: The @SafeVarargs annotation can be applied only to methods that cannot be overridden. Applying to the other methods will throw a compile time error.
+
+
+package com.ibs.demos.varargs;
+
+import java.util.ArrayList;
+import java.util.List;
+public class SafeVar{
+    // Applying @SaveVarargs annotation
+    @SafeVarargs
+    private void display(List<String>... products) { // Not using @SaveVarargs
+        for (List<String> product : products) {
+            System.out.println(product);
+        }
+    }
+    public static void main(String[] args) {
+        SafeVar p = new SafeVar();
+        List<String> list = new ArrayList<String>();
+        list.add("Laptop");
+        list.add("Tablet");
+        p.display(list);
+    }
+}
+.............................................................................................
+Collection new Factory Apis:
+............................
+
+Create List Creation;
+
+List<String> list = new ArrayList<> ();
+list.add("a")
+
+List<String> list  = Arrays.asList(array)
+
+Java 9 on wards:
+
+List.of() //factory methods
+
+Java 9 Collection library includes static factory methods for List, Set and Map interface. These methods are useful to create small number of collection.
+
+Suppose, if we want to create a list of 5 elements, we need to write the following code.
+
+static <E> List<E>	Of()	It It returns an immutable list containing zero elements.
+static <E> List<E>	of(E e1)	It It returns an immutable list containing one element.
+static <E> List<E>	of(E... elements)	It It returns an immutable list containing an arbitrary number of elements.
+static <E> List<E>	of(E e1, E e2)	It It returns an immutable list containing two elements
+
+package com.ibs.javafeatures.collections;
+
+import java.util.List;
+import java.util.Set;
+
+public class FactoryApis {
+    public static void main(String[] args) {
+        List<Integer> numbers = List.of(1, 2, 3, 4);
+        numbers.forEach(System.out::println);
+        //It is error : un modifiable list
+       // numbers.add(90);
+        numbers.forEach(System.out::println);
+
+        Set.of(2,3,4).forEach(System.out::println);
+    }
+}
+Java 9 Process API Improvement;
+
+Java has improved its process API in Java 9 version that helps to manage and control operating system processes.
+
+In earlier versions, it was complex to manage and control operating system processes by using Java programming. Now, new classes and interfaces are added to perform this task.
+
+boolean	supportsNormalTermination()	It returns true if the implementation of destroy() is to normally terminate the process, else returns false.
+ProcessHandle	toHandle()	It returns a ProcessHandle for the Process.
+long	pid()	It returns the native process ID of the process.
+Stream<ProcessHandle>	children()	It returns a snapshot of the direct children of the process.
+Stream<ProcessHandle>	descendants()	It returns a snapshot of the descendants of the process.
+ProcessHandle.Info	info()	It returns a snapshot of information about the process.
+CompletableFuture<Process>	onExit()	It returns a CompletableFuture<Process> for the termination of the Process.
+
+public class ProcessApiExample {  
+    public static void main(String[] args) {  
+        ProcessHandle currentProcess = ProcessHandle.current();     // Current processhandle  
+        System.out.println("Process Id: "+currentProcess.pid());    // Process id   
+        System.out.println("Direct children: "+ currentProcess.children()); // Direct children of the process  
+        System.out.println("Class name: "+currentProcess.getClass());       // Class name  
+        System.out.println("All processes: "+ProcessHandle.allProcesses()); // All current processes   
+        System.out.println("Process info: "+currentProcess.info());         // Process info  
+        System.out.println("Is process alive: "+currentProcess.isAlive());   
+        System.out.println("Process's parent "+currentProcess.parent());  // Parent of the process  
+    }  
+}  
+..............................................................................................
+Java Shell Tool (JShell)
+It is an interactive Java Shell tool, it allows us to execute Java code from the shell and shows output immediately. JShell is a REPL (Read Evaluate Print Loop) tool and run from the command line.
+
+Advantages of JShell
+Jshell has reduced all the efforts that are required to run a Java program and test a business logic.
+
+If we don't use Jshell, creating of Java program involves the following steps.
+
+Open editor and write program
+Save the program
+Compile the program
+Edit if any compile time error
+Run the program
+Edit if any runtime error
+Repeat the process
+Jshell does not require above steps. We can evaluate statements, methods and classes, even can write hello program without creating class.
+
+jshell
+E:\session\IBS\2022\javafeatures\javamodules>jshell
+|  Welcome to JShell -- Version 11.0.11
+|  For an introduction type: /help intro
+
+jshell> int a=10;
+a ==> 10
+
+jshell> int b=20
+b ==> 20
+
+jshell> int c = a * b
+c ==> 200
+
+jshell> /exit
+|  Goodbye
+.............................................................................................
+Java 9 new Stream apis:
+.......................
+static <T> Stream<T>	ofNullable(T t)	It returns a sequential Stream containing a single element, if non-null, otherwise returns an empty Stream.
+
+default Stream<T>	takeWhile(Predicate<? super T> predicate)	It returns, if this stream is ordered, a stream consisting of the longest prefix of elements taken from this stream that match the given predicate. Otherwise returns, if this stream is unordered, a stream consisting of a subset of elements taken from this stream that match the given predicate.
+
+
+default Stream<T>	dropWhile(Predicate<? super T> predicate)	It returns, if this stream is ordered, a stream consisting of the remaining elements of this stream after dropping the longest prefix of elements that match the given predicate. Otherwise returns, if this stream is unordered, a stream consisting of the remaining elements of this stream after dropping a subset of elements that match the given predicate.
+
+package com.ibs.demos.streamapis;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class StreamExample {
+    public static void main(String[] args) {
+        List<Integer> list
+                = Stream.of(2,2,3,4,5,6,7,8,9,10)
+                .dropWhile(i -> (i % 2 == 0)).collect(Collectors.toList());
+        System.out.println(list);
+        Stream<Integer> val
+                = Stream.ofNullable(null);
+        val.forEach(System.out::println);
+    }
+
+}
+..............................................................................................
+
+Java New Version-String Scheme
+
+
+Java version-string is a format that contains version specific information. This version-string consists of major, minor, security and patch update releases.
+
+In Java 9, a new version-string scheme is introduced that looks like the below.
+
+$MAJOR.$MINOR.$SECURITY.$PATCH  
+
+18.0.1.1-
+
+18.1.1.1
+
+
+
+Java version-string is a format that contains version specific information. This version-string consists of major, minor, security and patch update releases.
+
+In Java 9, a new version-string scheme is introduced that looks like the below.
+
+$MAJOR.$MINOR.$SECURITY.$PATCH  
+
+package com.ibs.demos.versions;
+
+public class VersionInfoExample {
+    public static void main(String[] args) {
+        Runtime.Version version = Runtime.version();                 // Getting runtime version instance
+        System.out.println("Current version is " + version);           // Getting current Java version
+        System.out.println("Major version number " + version.major()); // Getting major version number
+        System.out.println("Minor version number " + version.minor()); // Getting minor version number
+        System.out.println("Security version number " + version.security());  // Getting security version number
+        System.out.println("Pre-released information " + version.pre());      // Getting pre-release version information
+        System.out.println("Build Number " + version.build());                // Getting Optional build number
+    }
+}
+
+$MAJOR
+This version number shows a major change in Java version. It increases when a major change occurs. Like Java 8 to Java 9. Each major release contains new features to the existing one.
+
+$MINOR
+This version number shows minor changes in Java version and increases with each minor update. These updates can be bug fixes, revision to standard API etc. if an update is released to Java 9, version-string format will be Java 9.1 (contains major and minor release number).
+
+$SECURITY
+This version number represents security update and increase for each new security update. Security updates can be critical fixes and security issues. If any security update is released to Java 9, the version-string format will be like: Java 9.1.5 (contains major, minor and security release number).
+
+$PATCH
+This version number increases for each security and high-priority customer fixes, which has been tested together. If a patch is released to Java 9, version-string format will be Java 9.1.5.1 (contains major, minor, security and patch release number).
+
+The $MINOR and $SECURITY version numbers are set to zero, if the $MAJOR version number is incremented. However, when the $MINOR version number is incremented, the subsequent $SECURITY version number need not be set to zero.
+
+In Java 9, a Runtime.Version class is added to get Java version information.
+
+...........................................................................................
+                     Reactive Stream Implementations  - Reactive Programming
+............................................................................................
+
+If people know the reactive programming,it looks simple, Java 9 has integrated Reactive Stream Specification for build reactive apps, still we need more apis for building real time reactive apps for that we need to relay on Frameworks like "Rxjava,Project Reactor,Mutiny".
+.............................................................................................
+Java 9 Control Panel
+Java control panel is used to control Java applications that are embedded in browser. This control panel maintains the settings that manage Java application embedded in browser.
+
+In Java 9, control panel was rewritten as a JavaFX application and the storage location has changed. To start control panel, enter jcontrol to the terminal (cmd for windows) and it will open a window that looks below.
+.............................................................................................
+..............................................................................................
+					Java 10
+..............................................................................................
+Java 10 is the fastest release of a java version in its 23-year history. Java has been criticized for its slow growth and evolution, but Java 10 just shattered that concept. Java 10 is a release with many futuristic changes, the scope, and impact of which may not be obvious but are far-fetching.
+
+we will discuss the various features added in Java10 release. Before that, let’s go over some changes introduced to java release model.
+
+Long Term Support Model -LTS
+............................
+Long-term support (LTS) is a product lifecycle management policy in which a stable release of computer software is maintained for a longer period of time than the standard edition.
+
+What does this mean?
+
+LTS version of the products will offer premier and sustained support from Oracle and it will be targeted every 3 years.
+
+Each Java release is modeled after one or two major feature, these features drive the release. Any obstacle postpones the release and late to market.
+Project Jigsaw was a major feature of Java 9, it pushed out the release dates a couple of times and the release was delayed by more than 1.5 years.
+6 months cadence release will follow a release train. Release train will have a schedule every 6 months. Features which make the cut get boarded on the train; else they wait for the next scheduled train.
+
+Oracle JDK vs Open JDK
+
+In order to be more developer-friendly, Oracle & Java community now promotes the OpenJDK binaries as primary JDK going forward. This is a big relief from earlier days, where the JDK binaries were propriety and licensed by Oracle, which had various restrictions around redistribution. Oracle will, however, keep producing their JDK, but only for long term support releases. This is a move towards being more cloud & container friendly, as the open JDK binaries can be distributed as part of a container.
+
+
+What does this mean?
+
+Open JDK binaries will be released every 6 months, while Oracle JDK binaries will be released every 3 years (LTS version).
+
+Java 10 features:
+...............
+With the adoption of the time-based release cycle, Oracle changed the version-string scheme of the Java SE Platform and the JDK, and related versioning information, for present and future time-based release models.
+
+The new pattern of the Version number is:
+
+$FEATURE.$INTERIM.$UPDATE.$PATCH
+
+$FEATURE: counter will be incremented every 6 months and will be based on feature release versions, e.g: JDK 10, JDK 11.
+
+$INTERIM: counter will be incremented for non-feature releases that contain compatible bug fixes and enhancements but no incompatible changes. Usually, this will be zero, as there will be no interim release in a six month period. This kept for a future revision to the release model.
+
+$UPDATE: counter will be incremented for compatible update releases that fix security issues, regressions, and bugs in newer features. This is updated one month after the feature release and every 3 months thereafter. The April 2018 release is JDK 10.0.1, the July release is JDK 10.0.2, and so forth
+
+$PATCH: counter will be incremented for an emergency release to fix a critical issue.
+New API’s have been added to get these counter values programmatically. Let’s take a look;
+
+
+$ java -version
+java version "10" 2018-03-20
+Java(TM) SE Runtime Environment 18.3 (build 10+46)
+Java HotSpot(TM) 64-Bit Server VM 18.3 (build 10+46, mixed mode)
+
+The version number format is “10” as there’s no other counter which is other than zero. The date of release is added. 18.3 can be read as the Year 2018 & 3rd Month, build 10+46 is 46th build for version 10. For a hypothetical build 93 of JDK 10.0.1, the build will be 10.0.1+93
+.............................................................................................
+
+Programming features:
+....................
+Local-Variable Type Inference:
+
+Local-Variable Type Inference is the biggest new feature in Java 10 for developers. It adds type inference to declarations of local variables with initializers. Local type inference can be used only in the following scenarios:
+
+Limited only to Local Variable with initializer
+Indexes of enhanced for loop or indexes
+Local declared in for loop
+
+
+package com.ibs.javafeatures.localvariabletypeinference;
+
+import java.util.List;
+
+public class TypeInference {
+    
+    public static void main(String[] args) {
+        //local variable
+        int a = 10;
+        System.out.println(a);
+        //type inference is nothing but , variable type is understood automatically
+        var b = 100;
+        System.out.println(b);
+        var numbers = List.of(1, 2, 3);
+        numbers.forEach(System.out::println);
+        for (var i = 0; i < 10; i++) {
+            System.out.println(i);
+        }
+
+    }
+}
+..............................................................................................
+			How to run java apps in cloud Native - apps inside container
+.............................................................................................
+
+How to run java apps?
+
+ You need JVM , without which you cant run java apps
+
+ You dont need JVM To java apps now a days.
+  
+ Java apps ----.class---load on JVM---talks to os-
+
+ Java apps----.class----convert into native binary image-- load on OS-- Run
+
+
+
+Experimental Java-Based JIT Compiler  -Graal Compiler
+
+Graal was introduced in Java 9. It’s an alternative to the JIT compiler which we have been used to. It’s a plugin to the JVM, which means that the JIT compiler is not tied to JVM and it can be dynamically plugged in and replaced with any another plugin which JVMCI compliant (Java-Level JVM Compiler Interface). It also brings Ahead of Time (AOT) compilation in java world. It also supports polyglot language interpretation.
+
+“A Java-based Just in Time Compiler written in Java to convert the java bytecode to machine code.” Is it confusing? If JVM is written in Java, then don’t you need a JVM to run the JVM? The JVM can be compiled AOT and then JIT compiler can be used within JVM it for enhancing performance through live code optimization.
+
+Graal is a complete rewrite of the JIT compiler in Java from scratch. Previous JIT compiler was written in c++. It’s considered one for the final stage of evolution for any programming language.
+
+You can switch to Graal with following jvm parameters:
+
+
+-XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler
+
+..............................................................................................
+
+Thread-Local Handshakes (JEP 312)
+This is an internal JVM feature to improve performance.
+
+A handshake operation is a callback that is executed for each JavaThread while that thread is in a safepoint state. The callback is executed either by the thread itself or by the VM thread while keeping the thread in a blocked state.
+
+
+Consolidate the JDK Forest into a Single Repository (JEP 296)
+
+Over the years there have been various Mercurial repositories in for JDK codebase. Different repositories do provide some advantage, but they also had various operational downsides. As part of this change, numerous repositories of the JDK forest are combined into a single repository in order to simplify and streamline development.
+..............................................................................................
+
+Running Java File with single command
+One major change is that you don’t need to compile the java source file with javac tool first. You can directly run the file with java command and it implicitly compiles.
+This feature comes under JEP 330.
+
+package com.mycom;
+
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello");
+    }
+}
+>java11features\src>java com/mycom/HelloWorld.java
+Hello
+
+............................................................................................
+				Java 11 new String apis
+............................................................................................
+
+New utility methods in String class
+
+1.isBlank
+2.lines
+   Stream of lines extracted from the string.
+
+3.strip
+4.stripLeading
+5.stripTrailing
+  =>eq to trim, where these methods unicode aware
+6.repeat
+   return concatenation of the string repeated n times
+
+package com.ibs.javafeatures.strings;
+
+import java.util.stream.Collectors;
+
+public class StringApis {
+    public static void main(String[] args) {
+        System.out.println(" ".isBlank() ? "Blank" : "Not Blank"); //true
+        String str = "JD\nJD\nJD";
+        str.lines().map(String::toLowerCase).collect(Collectors.toList()).forEach(System.out::println);
+         str = " JD ";
+        System.out.print("Start");
+        System.out.print(str.strip());
+        System.out.println("End");
+
+        System.out.print("Start");
+        System.out.print(str.stripLeading());
+        System.out.println("End");
+
+        System.out.print("Start");
+        System.out.print(str.stripTrailing());
+        System.out.println("End");
+        String hello = "hello".repeat(10);
+        System.out.println(hello);
+    }
+}
+.............................................................................................
+
+JDK Enhancement Proposal
+
+The JDK Enhancement Proposal (or JEP) is a process drafted by Oracle Corporation for collecting proposals for enhancements to the Java Development Kit and OpenJDK.
+
+Relationships with the JCP
+
+The JEP process is not intended to replace the Java Community Process, which is still required to approve changes in the Java API or language but rather to allow for OpenJDK committers to work more informally before becoming a formal Java Specification Request
+.............................................................................................
+Local-Variable Syntax for Lambda Parameters:
+
+Local-Variable Syntax for Lambda Parameters is the only language feature release in Java 11.
+In Java 10, Local Variable Type Inference was introduced. Thus we could infer the type of the variable from the RHS – var list = new ArrayList<String>();
+
+
+package com.ibs.javafeatures.localvariableslambda;
+
+@FunctionalInterface
+interface Welcome {
+    void sayHello(String message, String name);
+}
+
+public class LocalVariableLambda {
+    public static void main(String[] args) {
+        Welcome welcome = null;
+        welcome = new Welcome() {
+            @Override
+            public void sayHello(String message, String name) {
+                System.out.println(message + name);
+            }
+        };
+        welcome.sayHello("Hello", "Subramanian");
+
+        welcome = (String message, String name) -> System.out.println(message + name);
+
+        welcome.sayHello("Hello", "Subramanian");
+
+        welcome = (var message, var name) -> System.out.println(message + name);
+
+        welcome.sayHello("Hello", "Subramanian");
+    }
+}
+..............................................................................................
+
+Nested Based Access Control:
+
+Java allows classes and interfaces to be nested within each other. These nested types have unrestricted access to each other, including to private fields, methods, and constructors.
+
+
+package com.ibs.javafeatures.nestedclassprivate;
+
+import java.lang.reflect.Method;
+
+//calling private method of outerclass from the inner class via reflection is possible now 
+
+class Outer {
+
+    public void outerPublic() throws Exception {
+        Inner inner = new Inner();
+        inner.innerPublicReflection(new Outer());
+    }
+
+    private void outerPrivate() {
+        System.out.println("private methods");
+    }
+
+    class Inner {
+
+        public void innerPublicReflection(Outer ob) throws Exception {
+            System.out.println("ref");
+            Method method = ob.getClass().getDeclaredMethod("outerPrivate");
+            method.invoke(ob);
+        }
+    }
+}
+public class NestMain {
+    public static void main(String[] args) throws Exception {
+        Outer outer = new Outer();
+        outer.outerPublic();
+    }
+}
+..............................................................................................
+
+HTTP Client Api
+
+Java 11 standardizes the Http CLient API.
+The new API supports both HTTP/1.1 and HTTP/2. It is designed to improve the overall performance of sending requests by a client and receiving responses from the server. It also natively supports WebSockets
+
+
+We can send the synchronous request as well as asynchronous request.
+Following are methods to send request.
+send(HttpRequest, BodyHandler): It is a blocking call. Blocks until the request has been sent and the response has been received.
+sendAsync(HttpRequest, BodyHandler): It is a non-blocking call. Sends the request and receives the response asynchronously. It will return the CompletableFuture immediately . The CompletableFuture completes when the response becomes available.
+
+
+ HttpClient client = HttpClient.newBuilder()
+        .version(Version.HTTP_1_1)
+        .followRedirects(Redirect.NORMAL)
+        .connectTimeout(Duration.ofSeconds(20))
+        .proxy(ProxySelector.of(new InetSocketAddress("proxy.example.com", 80)))
+        .authenticator(Authenticator.getDefault())
+        .build();
+   HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+   System.out.println(response.statusCode());
+   System.out.println(response.body()); 
+
+
+  HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create("https://foo.com/"))
+        .timeout(Duration.ofMinutes(2))
+        .header("Content-Type", "application/json")
+        .POST(BodyPublishers.ofFile(Paths.get("file.json")))
+        .build();
+   client.sendAsync(request, BodyHandlers.ofString())
+        .thenApply(HttpResponse::body)
+        .thenAccept(System.out::println);  
+
+
+
+package com.ibs.javafeatures.http;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+public class HttpClientDemo {
+    public static void main(String[] args) {
+       // getResponse();
+        getAsyncResponse();
+    }
+
+    private static void getAsyncResponse() {
+        //client
+        var httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create("https://jsonplaceholder.typicode.com/todos"))
+                .setHeader("User-Agent", "Java Apps")
+                .build();
+        CompletableFuture<HttpResponse<String>> responseCompletableFuture=  httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
+        try {
+            String res = responseCompletableFuture.thenApply(HttpResponse::body).get(5, TimeUnit.SECONDS);
+            System.out.println(res);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void getResponse() {
+        //client
+        var httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+        //Request
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create("https://jsonplaceholder.typicode.com/todos"))
+                .setHeader("User-Agent", "Java Apps")
+                .build();
+
+        try {
+            HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println(httpResponse.body());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+.......................................................................................
+
+				 File IO and Strings
+...........................................................................................
+
+Reading/Writing Strings to and from the Files
+
+Java 11 strives to make reading and writing of String convenient.
+It has introduced the following methods for reading and writing to/from the files:
+
+readString()
+writeString()
+
+package com.ibs.javafeatures.fileiostrings;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class FileIOStringsDemo {
+    public static void main(String[] args) {
+        Path path = null;
+        try {
+            path = Files.writeString(Files.createTempFile("test", ".txt"), "Hello How are you");
+            System.out.println(path);
+            String s = Files.readString(path);
+            System.out.println(s); //This was posted on JD
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+..............................................................................................					  Switch Expressions
+..............................................................................................
+
+What is expression?
+  int a =10 *10; //10*10 is expression
+
+var res = switch {
+   match conditions
+      return value
+}
+
+Why does java 12 want to do with Switch Expressions?
+
+=>Extend traditional switch so they can be a statement or an expression.
+=>For Instance Pattern Matching.
+
+int res = switch(x) {
+  case 1 -> "";
+  default -> "foo"
+}
+
+
+int res = switch(x) {
+  case 3,6,9 -> "nice numbers";
+  default -> "foo"
+}
+
+package com.ibs.javafeatures.switchexpressions;
+
+public class SwitchDemos {
+    public static void main(String[] args) {
+        int x = 1;
+        //switch expression
+        String res = switch (x) {
+            case 1 -> "one";
+            default -> "foo";
+        };
+        System.out.println(res);
+        var myresponse = switch (x) {
+            case 1 -> 23;
+            default -> "foo";
+        };
+        System.out.println(myresponse);
+        var numbers = 9;
+        var choice = switch (numbers) {
+            case 3, 6, 9 -> "Magic Number";
+            default -> "Sorry you are unlucky";
+        };
+        System.out.println(choice);
+        //traditional colon syntax;
+        switch (numbers) {
+            case 3, 6, 9:
+                System.out.println("Magic Numbers");
+                break;
+            default:
+                System.out.println("No Choice");
+                break;
+        }
+
+        var y = switch (numbers) {
+            case 1:
+                String name = "foo";
+                yield  name;
+            default:
+                String bar ="bar";
+                yield bar;    
+
+        };
+    }
+}
+..............................................................................................
+				File Comparsion
+.............................................................................................
+File.mismatch method:
+
+public static long mismatch(Path path, Path path2) throws IOException
+
+
+This method returns the position of the first mismatch or -1L if there is no mismatch.
+
+Two files can have a mismatch in the following scenarios:
+
+If the bytes are not identical. In this case, the position of the first mismatching byte is returned.
+File sizes are not identical. In this case, the size of the smaller file is returned.
+
+package com.ibs.javafeatures.fileiostrings;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class FileMismatchExample {
+
+    public static void main(String[] args) throws IOException {
+        Path filePath1 = Files.createTempFile("file1", ".txt");
+        Path filePath2 = Files.createTempFile("file2", ".txt");
+        Files.writeString(filePath1,"Test String");
+        Files.writeString(filePath2,"Test String");
+
+        long mismatch = Files.mismatch(filePath1, filePath2);
+
+        System.out.println("File Mismatch position... It returns -1 if there is no mismatch");
+
+        System.out.println("Mismatch position in file1 and file2 is >>>>");
+        System.out.println(mismatch);
+
+        filePath1.toFile().deleteOnExit();
+        filePath2.toFile().deleteOnExit();
+
+        System.out.println();
+
+        Path filePath3 = Files.createTempFile("file3", ".txt");
+        Path filePath4 = Files.createTempFile("file4", ".txt");
+        Files.writeString(filePath3,"JournalDev Test String");
+        Files.writeString(filePath4,"JournalDev.com Test String");
+
+        long mismatch2 = Files.mismatch(filePath3, filePath4);
+
+        System.out.println("Mismatch position in file3 and file4 is >>>>");
+        System.out.println(mismatch2);
+
+        filePath3.toFile().deleteOnExit();
+        filePath4.toFile().deleteOnExit();
+
+
+
+    }
+
+}
+..............................................................................................
+
+NumberFormat Instance creation Api:
+...................................
+NumberFormat.getCompactNumberInstance()
+
+package com.ibs.javafeatures.compactnumbers;
+
+import java.text.NumberFormat;
+import java.util.Locale;
+
+public class CompactNumberFormatting {
+    public static void main(String[] args)
+    {
+        System.out.println("Compact Formatting is:");
+        NumberFormat upvotes = NumberFormat
+                .getCompactNumberInstance(new Locale("en", "US"), NumberFormat.Style.SHORT);
+        upvotes.setMaximumFractionDigits(1);
+
+        System.out.println(upvotes.format(2592) + " upvotes");
+
+
+        NumberFormat upvotes2 = NumberFormat
+                .getCompactNumberInstance(new Locale("en", "US"), NumberFormat.Style.LONG);
+        upvotes2.setMaximumFractionDigits(2);
+        System.out.println(upvotes2.format(2011) + " upvotes");
+    }
+}
+............................................................................................
+
+Stream Collectors Api:
+.......................
+
+package com.ibs.javafeatures.streamapis;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.summingDouble;
+
+public class CollectorsNewApi {
+    public static void main(String[] args) {
+        double mean = Stream.of(1, 2, 3, 4, 5)
+                .collect(Collectors.teeing(
+                        summingDouble(i -> i),
+                        counting(),
+                        (sum, n) -> sum / n));
+
+        System.out.println(mean);
+    }
+}
+.............................................................................................
+
+
+Java Strings New Methods
+
+4 new methods have been introduced in Java 12 which are:
+
+indent(int n)
+transform(Function f)
+Optional describeConstable()
+String resolveConstantDesc​(MethodHandles.Lookup lookup)
+
+package com.ibs.javafeatures.strings;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+public class AdvancedStringApi {
+    public static void main(String[] args) {
+        String str = "*****\n  Hi\n  \tHello Pankaj\rHow are you?\n*****";
+
+        System.out.println(str.indent(0));
+        System.out.println(str.indent(3));
+        System.out.println(str.indent(-3));
+
+        String s = "Hi,Hello,Howdy";
+        List strList = s.transform(s1 -> {return Arrays.asList(s1.split(","));});
+        System.out.println(strList.stream());
+
+        String so = "Hello";
+        Optional os = so.describeConstable();
+        System.out.println(os);
+        System.out.println(os.get());
+
+    }
+}
+..............................................................................................
+				instance of Operator expression
+..............................................................................................
+
+At some point, we've probably all written or seen code that includes some kind of conditional logic to test if an object has a specific type. Typically, we might do this with the instanceof operator followed by a cast. This allows us to extract our variable before applying further processing specific to that type.
+
+Let's imagine we want to check the type in a simple hierarchy of animal objects:
+
+if (animal instanceof Cat) {
+    Cat cat = (Cat) animal;
+    cat.meow();
+   // other cat operations
+} else if (animal instanceof Dog) {
+    Dog dog = (Dog) animal;
+    dog.woof();
+    // other dog operations
+}
+In this example, for each conditional block, we're testing the animal parameter to determine its type, converting it via a cast and declaring a local variable. Then, we can perform operations specific to that particular animal.
+
+Although this approach works, it has several drawbacks:
+
+1.It's tedious to write this type of code where we need to test the type and make a cast for every conditional block
+
+2.We repeat the type name three times for every if block
+
+3.Readability is poor as the casting and variable extraction dominate the code
+
+4.Repeatedly declaring the type name means there's more likelihood of introducing an error. 
+5.This could lead to an unexpected runtime error 
+
+if (animal instanceof Cat cat) {
+    cat.meow();
+} else if(animal instanceof Dog dog) {
+    dog.woof();
+}
+
+package com.ibs.javafeatures.newinstanceof;
+
+public class Demo {
+
+    public void performAnimalOperations(Animal animal) {
+        if (animal instanceof Cat cat) {
+            cat.meow();
+        } else if(animal instanceof Dog dog) {
+            dog.woof();
+        }
+    }
+
+    abstract class Animal {
+    }
+
+    final class Cat extends Animal {
+        void meow() {
+            System.out.println("meow");
+        }
+    }
+
+    final class Dog extends Animal {
+        void woof() {
+            System.out.println("woof");
+
+        }
+    }
+    public void create(Demo demo){
+        demo.performAnimalOperations(new Cat());
+        demo.performAnimalOperations(new Dog());
+
+    }
+
+    public static void main(String[] args)
+    {
+
+        Demo demo = new Demo();
+        demo.create(demo);
+
+
+    }
+
+
+}
+..............................................................................................
+				Java 13
+
+
+Text Blocks:
+
+This is a preview feature. It allows us to create multiline strings easily. The multiline string has to be written inside a pair of triple-double quotes.
+
+The string object created using text blocks has no additional properties. It’s an easier way to create multiline strings. We can’t use text blocks to create a single-line string.
+
+The opening triple-double quotes must be followed by a line terminator.
+
+package com.ibs.javafeatures.strings;
+
+public class TextBlocks {
+    public static void main(String[] args) {
+        String textBlock = """
+                Hi
+                Hello
+                Yes""";
+
+        String str = "Hi\nHello\nYes";
+
+        System.out.println("Text Block String:\n" + textBlock);
+        System.out.println("Normal String Literal:\n" + str);
+
+    }
+}
+
+New Methods in String Class for Text Blocks:
+
+There are three new methods in the String class, associated with the text blocks feature.
+
+formatted(Object… args): it’s similar to the String format() method. It’s added to support formatting with the text blocks.
+
+stripIndent(): used to remove the incidental white space characters from the beginning and end of every line in the text block. This method is used by the text blocks and it preserves the relative indentation of the content.
+
+translateEscapes(): returns a string whose value is this string, with escape sequences translated as if in a string literal.
+
+package com.ibs.javafeatures.strings;
+
+public class TextBlocks {
+    public static void main(String[] args) {
+        String textBlock = """
+                Hi
+                Hello
+                Yes""";
+
+        String str = "Hi\nHello\nYes";
+
+        System.out.println("Text Block String:\n" + textBlock);
+        System.out.println("Normal String Literal:\n" + str);
+
+        String output = """
+			    Name: %s
+			    Phone: %d
+			    Salary: $%.2f
+			    """.formatted("Pankaj", 123456789, 2000.5555);
+
+        System.out.println(output);
+
+    }
+}
+Switch Expressions Enhancements – JEP 354
+Switch expressions were added as a preview feature in Java 12 release. It’s almost same in Java 13 except that the “break” has been replaced with “yield” to return a value from the case statement.
+
+package demos;
+
+public class Demo {
+
+    public static void main(String[] args) {
+
+        int choice = 2;
+
+        switch (choice) {
+            case 1:
+                System.out.println(choice);
+                break;
+            case 2:
+                System.out.println(choice);
+                break;
+            case 3:
+                System.out.println(choice);
+                break;
+            default:
+                System.out.println("integer is greater than 3");
+        }
+
+        // from java 13 onwards - multi-label case statements
+        switch (choice) {
+            case 1, 2, 3:
+                System.out.println(choice);
+                break;
+            default:
+                System.out.println("integer is greater than 3");
+        }
+
+        // switch expressions, use yield to return, in Java 12 it was break
+        int x = switch (choice) {
+            case 1, 2, 3:
+                yield choice;
+            default:
+                yield -1;
+        };
+        System.out.println("x = " + x);
+
+    }
+
+    public String getDay(Day d) {
+        String day = switch (d) {
+            case SUN -> "Sunday";
+            case MON -> "Monday";
+            case TUE -> "Tuesday";
+        };
+        return day;
+    }
+
+    ;
+
+
+    enum Day {
+        SUN, MON, TUE
+    }
+}
+.............................................................................................
+				Java 14
+Switch Expressions
+Switch Expressions after staying a preview feature in the last two releases –Java 12 and Java 13 have finally attained permanent status in Java 14.
+
+ String day="ccc";
+        String result = switch (day) {
+            case "M", "W", "F" -> "MWF";
+            case "T", "TH", "S" -> "TTS";
+            default -> {
+                if(day.isEmpty())
+                    yield "Please insert a valid day.";
+                else
+                    yield "Looks like a Sunday.";
+            }
+
+        };
+        System.out.println(result);
+
+Enchancement in instance of pattern matching:
+if (obj instanceof Journaldev jd) {
+  System.out.println(jd.getAuthor());
+}
+............................................................................................
+
+Helpful NullPointerExceptions:
+
+Null Pointer Exceptions are a nightmare for any developer. Previously, until Java 13, it was tricky to debug the infamous NPEs. Developers had to fall onto other debugging tools or manually figure the variable/method that was null since the stack trace would only show the line number.
+
+
+Before Java 14:
+
+String name = jd.getBlog().getAuthor()
+ 
+//Stacktrace
+Exception in thread "main" java.lang.NullPointerException
+    at NullPointerExample.main(NullPointerExample.java:5)
+
+Java 14 introduced a new JVM feature which gives better insights with a more descriptive stack as shown below:
+
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "Blog.getAuthor()" because the return value of "Journaldev.getBlog()" is null
+    at NullPointerExample.main(NullPointerExample.java:4)
+
+Note: The above feature is not a language feature. It’s an enhancement in the runtime environment.	
+..............................................................................................
+					Record
+..............................................................................................
+
+Passing immutable data between objects is one of the most common, but mundane tasks in many Java applications.
+
+Prior to Java 14, this required the creation of a class with boilerplate fields and methods, which were susceptible to trivial mistakes and muddled intentions.
+
+With the release of Java 14, we can now use records to remedy these problems.
+
+Commonly, we write classes to simply hold data, such as database results, query results, or information from a service.
+
+n many cases, this data is immutable, since immutability ensures the validity of the data without synchronization.
+
+To accomplish this, we create data classes with the following:
+
+private, final field for each piece of data
+getter for each field
+public constructor with a corresponding argument for each field
+equals method that returns true for objects of the same class when all fields match
+hashCode method that returns the same value when all fields match
+toString method that includes the name of the class and the name of each field and its corresponding value
+
+public class Person {
+
+    private final String name;
+    private final String address;
+
+    public Person(String name, String address) {
+        this.name = name;
+        this.address = address;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, address);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (!(obj instanceof Person)) {
+            return false;
+        } else {
+            Person other = (Person) obj;
+            return Objects.equals(name, other.name)
+              && Objects.equals(address, other.address);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Person [name=" + name + ", address=" + address + "]";
+    }
+
+    // standard getters
+}
+
+
+As of JDK 14, we can replace our repetitious data classes with records. Records are immutable data classes that require only the type and name of fields.
+
+The equals, hashCode, and toString methods, as well as the private, final fields, and public constructor, are generated by the Java compiler.
+
+public record Person (String name, String address) {}
+.............................................................................................
+
+Person.java
+
+package com.ibs.javafeatures.records;
+
+public record Person(int id, String firstName, String lastName) {
+}
+
+
+public class RecordMain {
+    public static void main(String[] args) {
+        Person person = new Person(1, "Subramanian", "Murugan");
+        System.out.println(person.id() + " " + person.firstName() + " " + person.lastName());
+    }
+}
+
+
+A Record is final.
+ Every record is final class, you cant inherit with other classes and interfaces
+
+package com.ibs.javafeatures.records;
+
+//default constructor
+public record Person(int id, String firstName, String lastName) {
+    //extra constructors
+    public Person() {
+        this(0, "firstName", "lastName");
+    }
+
+    public String fullName() {
+        return this.firstName + this.lastName;
+    }
+    public static String info() {
+        return "Info";
+    }
+}
+
+package com.ibs.javafeatures.records;
+
+
+public class RecordMain {
+    public static void main(String[] args) {
+        Person person = new Person(1, "Subramanian", "Murugan");
+        System.out.println(person.id() + " " + person.firstName() + " " + person.lastName());
+        System.out.println(person.id() + " " + person.fullName());
+        System.out.println(Person.info());
+        System.out.println(person.toString());
+
+        Person person1 = new Person();
+        System.out.println(person1.id() + " " + person1.firstName() + " " + person1.lastName());
+    }
+}
+
+.............................................................................................
+Sealed Classes :
+
+Sealed classes have been there in Kotlin since a while and Java 15 finally introduces this feature for better control over inheritance.
+
+As the name suggests, Sealed classes let you restrict or permit class hierarchies to only certain types.
+
+This is incredibly useful for pattern matching as you have a specific number of classes to switch between.
+
+Sealed class is declared using sealed keyword.
+
+Sealed classes allow to declare which class can be a subtype using permits keyword.
+
+A class extending sealed class must be declared as either sealed, non-sealed or final.
+
+Sealed classes helps in creating a finite and determinable hiearchy of classes in inheritance.
+
+package com.ibs.javafeatures.sealedclasses;
+
+public class Demo {
+
+    public static void main(String[] args) {
+        Person manager = new Manager(23, "Robert");
+        manager.name = "Robert";
+        System.out.println(getId(manager));
+    }
+    public static int getId(Person person) {
+        if (person instanceof Employee) {
+            return ((Employee) person).getEmployeeId();
+        }
+        else if (person instanceof Manager) {
+            return ((Manager) person).getManagerId();
+        }
+        return -1;
+    }
+}
+abstract sealed class Person permits Employee, Manager {
+    String name;
+    String getName() {
+        return name;
+    }
+}
+  //Hero is not allowed in the sealed hierarchy
+//final class Hero extends Person {
+//    
+//}
+
+final class Employee extends Person {
+    String name;
+    int id;
+    Employee(int id, String name){
+        this.id = id;
+        this.name = name;
+    }
+    int getEmployeeId() {
+        return id;
+    }
+}
+non-sealed class Manager extends Person {
+    int id;
+    Manager(int id, String name){
+        this.id = id;
+        this.name = name;
+    }
+    int getManagerId() {
+        return id;
+    }
+}
+
+Hidden classes:
+  Introduce hidden classes, which are classes that cannot be used directly by the bytecode of other classes. Hidden classes are intended for use by frameworks that generate classes at run time and use them indirectly, via reflection. A hidden class may be defined as a member of an access control nest, and may be unloaded independently of other classes.
+.............................................................................................
+                                        Java 16
+
+
+Day Period Support:
+
+A new addition to the DateTimeFormatter is the period-of-day symbol “B“, which provides an alternative to the am/pm format:
+
+
+
+
+package com.ibs.javafeatures.datetime;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
+public class Demo {
+
+    public static void main(String[] args) {
+        LocalTime date = LocalTime.parse("15:25:08.690791");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h B");
+        System.out.println(date.format(formatter));
+    }
+
+}
+
+
+
+Add Stream.toList Method:
+
+The aim is to reduce the boilerplate with some commonly used Stream collectors, such as Collectors.toList and Collectors.toSet:
+
+
+package demos;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Demo {
+
+    public static void main(String[] args) {
+        List<String> integersAsString = Arrays.asList("1", "2", "3");
+        List<Integer> ints = integersAsString.stream().map(Integer::parseInt).collect(Collectors.toList());
+        List<Integer> intsEquivalent = integersAsString.stream().map(Integer::parseInt).toList();
+        System.out.println(ints);
+    }
+
+}
+Sealed Class Enchancements:
+
+public sealed interface JungleAnimal permits Monkey, Snake  {
+}
+
+public final class Monkey implements JungleAnimal {
+}
+
+public non-sealed class Snake implements JungleAnimal {
+}
+The sealed keyword is used in conjunction with the permits keyword to determine exactly which classes are allowed to implement this interface. In our example, this is Monkey and Snake. 
+
+All inheriting classes of a sealed class must be marked with one of the following:
+
+sealed – meaning they must define what classes are permitted to inherit from it using the permits keyword.
+final – preventing any further subclasses
+non-sealed – allowing any class to be able to inherit from it.
+A significant benefit of sealed classes is that they allow for exhaustive pattern matching checking without the need for a catch for all non-covered cases. For example, using our defined classes, we can have logic to cover all possible subclasses of JungleAnimal:
+
+JungleAnimal j = // some JungleAnimal instance
+
+if (j instanceof Monkey m) {
+    // do logic
+} else if (j instanceof Snake s) {
+    // do logic
+}
+.............................................................................................
+Java 17 
+   The same feature been added  in java 16.
+
+					Java 18
+
+JEP 400: UTF-8 by Default
+JEP 408: Simple Web Server
+JEP 413: Code Snippets in Java API Documentation
+JEP 416: Reimplement Core Reflection with Method Handles
+JEP 417: Vector API (Third Incubator)
+JEP 418: Internet-Address Resolution SPI
+JEP 419: Foreign Function & Memory API (Second Incubator)
+JEP 420: Pattern Matching for switch (Second Preview)
+JEP 421: Deprecate Finalization for Removal
+
+.............................................................................................
+Java 8 to 18 Migration:
+......................
+https://docs.oracle.com/en/java/javase/17/migrate/getting-started.html
+
+Preparing For Migration
+The following sections will help you successfully migrate your application:
+Download the Latest JDK
+Run Your Program Before Recompiling
+Update Third-Party Libraries
+Compile Your Application if Needed
+Run jdeps on Your Code
+
+https://docs.oracle.com/en/java/javase/17/migrate/migrating-jdk-8-later-jdk-releases.html#GUID-2F61F3A9-0979-46A4-8B49-325BA0EE8B66
+
